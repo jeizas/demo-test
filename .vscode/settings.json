@@ -4,6 +4,22 @@
     "git.inputValidationLength": 72,
     "git.inputValidationSubjectLength": 50,
     "git.useCommitInputAsStashMessage": true,
-    "problems.decorations.enabled": false
+    "problems.decorations.enabled": false,
+    // Java 格式化设置
+    "java.format.onType.enabled": true,
+    "java.format.enabled": true,
+    // 保存时自动格式化
+    "editor.formatOnSave": false,
+    "editor.formatOnType": true,
+    "editor.formatOnPaste": true,
+    // 缩进设置
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    // Java 特定设置
+    "[java]": {
+        "editor.tabSize": 4,
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "redhat.java"
+    }
 }
-

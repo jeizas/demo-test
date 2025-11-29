@@ -1,5 +1,53 @@
 # Cursor AI 规则配置
 
+## Java 代码生成规则
+
+生成 Java 代码时，必须遵循以下规范：
+
+### 注释规范
+1. **禁止行尾注释**：不要在代码行末尾添加注释（如 `private String name; // 用户名`）
+2. **类注释必须包含**：
+   - 类的功能描述
+   - `@author jeizas`
+   - `@date` 当前日期（格式：yyyy-MM-dd）
+3. **方法必须添加 JavaDoc**：包含功能描述、参数说明、返回值说明
+
+### 类注释模板
+```java
+/**
+ * 类功能描述
+ *
+ * @author jeizas
+ * @date 2025-11-29
+ */
+public class ClassName {
+}
+```
+
+### 方法注释模板
+```java
+/**
+ * 方法功能描述
+ *
+ * @param paramName 参数说明
+ * @return 返回值说明
+ */
+public ReturnType methodName(ParamType paramName) {
+}
+```
+
+### 字段注释规范
+```java
+// 正确：注释在字段上方
+/** 用户名 */
+private String name;
+
+// 错误：不要使用行尾注释
+private String name; // 用户名
+```
+
+---
+
 ## Git Commit Message 生成规则
 
 当生成 Git commit message 时，必须严格遵循以下中文模板格式：
