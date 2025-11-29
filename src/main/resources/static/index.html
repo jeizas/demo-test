@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>五子棋对战</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #1a1612;
+            --bg-secondary: #2d2520;
+            --board-color: #dcb35c;
+            --board-dark: #c9a449;
+            --text-primary: #f5e6d3;
+            --text-secondary: #a89080;
+            --accent-gold: #ffd700;
+            --accent-red: #e74c3c;
+            --black-stone: #1a1a1a;
+            --white-stone: #f5f5f5;
+            --shadow-dark: rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 背景装饰 */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(220, 179, 92, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(220, 179, 92, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(45, 37, 32, 0.5) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            z-index: 1;
+            padding: 20px;
+        }
+
+        .title {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 3.5rem;
+            color: var(--accent-gold);
+            text-shadow: 
+                0 0 20px rgba(255, 215, 0, 0.5),
+                0 4px 8px var(--shadow-dark);
+            letter-spacing: 0.5rem;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 20px rgba(255, 215, 0, 0.5), 0 4px 8px var(--shadow-dark); }
+            to { text-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 4px 8px var(--shadow-dark); }
+        }
+
+        .game-info {
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, #3d3530 100%);
+            border-radius: 50px;
+            border: 1px solid rgba(220, 179, 92, 0.3);
+            box-shadow: 0 4px 20px var(--shadow-dark);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .player-info.active {
+            background: rgba(255, 215, 0, 0.15);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .stone-indicator {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            box-shadow: 
+                inset -3px -3px 6px rgba(0, 0, 0, 0.4),
+                inset 3px 3px 6px rgba(255, 255, 255, 0.2),
+                0 2px 4px var(--shadow-dark);
+        }
+
+        .stone-indicator.black {
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, var(--black-stone));
+        }
+
+        .stone-indicator.white {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #d0d0d0);
+        }
+
+        .player-label {
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .status-text {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            font-weight: 500;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .board-container {
+            position: relative;
+            padding: 25px;
+            background: linear-gradient(145deg, #e8c86d 0%, var(--board-color) 50%, #c9a449 100%);
+            border-radius: 10px;
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.5),
+                inset 0 2px 4px rgba(255, 255, 255, 0.3),
+                inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .board-container::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 2px solid rgba(139, 90, 43, 0.5);
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(15, 36px);
+            grid-template-rows: repeat(15, 36px);
+            gap: 0;
+            background: 
+                linear-gradient(90deg, #8b5a2b 1px, transparent 1px),
+                linear-gradient(#8b5a2b 1px, transparent 1px);
+            background-size: 36px 36px;
+            background-position: 18px 18px;
+            position: relative;
+        }
+
+        .cell {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.1s ease;
+        }
+
+        .cell:hover::before {
+            content: '';
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.15);
+            pointer-events: none;
+        }
+
+        .cell.disabled {
+            cursor: not-allowed;
+        }
+
+        .cell.disabled:hover::before {
+            display: none;
+        }
+
+        .stone {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            position: absolute;
+            animation: placeStone 0.3s ease-out;
+            z-index: 1;
+        }
+
+        @keyframes placeStone {
+            0% {
+                transform: scale(0) translateY(-20px);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1) translateY(0);
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .stone.black {
+            background: radial-gradient(circle at 30% 30%, #4a4a4a, var(--black-stone));
+            box-shadow: 
+                inset -4px -4px 8px rgba(0, 0, 0, 0.6),
+                inset 4px 4px 8px rgba(100, 100, 100, 0.3),
+                2px 3px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .stone.white {
+            background: radial-gradient(circle at 30% 30%, #ffffff, #e0e0e0);
+            box-shadow: 
+                inset -4px -4px 8px rgba(150, 150, 150, 0.4),
+                inset 4px 4px 8px rgba(255, 255, 255, 0.8),
+                2px 3px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .stone.last-move::after {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent-red);
+            box-shadow: 0 0 6px var(--accent-red);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.8); }
+        }
+
+        /* 星位点 */
+        .star-point {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #5a3d2b;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 0;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 12px 35px;
+            font-size: 1rem;
+            font-family: 'Noto Sans SC', sans-serif;
+            font-weight: 500;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #daa520 100%);
+            color: var(--bg-primary);
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, #3d3530 100%);
+            color: var(--text-primary);
+            border: 1px solid rgba(220, 179, 92, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* 消息提示 */
+        .message-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .message-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .message-box {
+            background: linear-gradient(135deg, var(--bg-secondary) 0%, #3d3530 100%);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .message-overlay.show .message-box {
+            transform: scale(1);
+        }
+
+        .message-box h2 {
+            font-family: 'Ma Shan Zheng', cursive;
+            font-size: 2.5rem;
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+        }
+
+        .message-box p {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+        }
+
+        /* 连接状态 */
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            border: 1px solid rgba(220, 179, 92, 0.3);
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e74c3c;
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.connected {
+            background: #2ecc71;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .connection-status span {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 215, 0, 0.2);
+            border-top-color: var(--accent-gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="connectionText">连接中...</span>
+    </div>
+
+    <div class="container">
+        <h1 class="title">五子棋对战</h1>
+        
+        <div class="game-info">
+            <div class="player-info" id="blackPlayer">
+                <div class="stone-indicator black"></div>
+                <span class="player-label">黑棋</span>
+            </div>
+            <div class="status-text" id="statusText">等待连接...</div>
+            <div class="player-info" id="whitePlayer">
+                <div class="stone-indicator white"></div>
+                <span class="player-label">白棋</span>
+            </div>
+        </div>
+
+        <div class="board-container">
+            <div id="board"></div>
+        </div>
+
+        <div class="buttons">
+            <button class="btn-primary" id="resetBtn" disabled>重新开始</button>
+        </div>
+    </div>
+
+    <div class="message-overlay" id="messageOverlay">
+        <div class="message-box">
+            <h2 id="messageTitle">游戏结束</h2>
+            <p id="messageText">黑棋获胜！</p>
+            <button class="btn-primary" id="playAgainBtn">再来一局</button>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let ws = null;
+        let myColor = 0;  // 0=未分配, 1=黑棋, 2=白棋
+        let currentPlayer = 0;
+        let gameStarted = false;
+        let gameOver = false;
+        let board = Array(15).fill(null).map(() => Array(15).fill(0));
+        let lastMove = null;
+
+        // DOM 元素
+        const boardEl = document.getElementById('board');
+        const statusText = document.getElementById('statusText');
+        const resetBtn = document.getElementById('resetBtn');
+        const messageOverlay = document.getElementById('messageOverlay');
+        const messageTitle = document.getElementById('messageTitle');
+        const messageText = document.getElementById('messageText');
+        const playAgainBtn = document.getElementById('playAgainBtn');
+        const statusDot = document.getElementById('statusDot');
+        const connectionText = document.getElementById('connectionText');
+        const blackPlayerEl = document.getElementById('blackPlayer');
+        const whitePlayerEl = document.getElementById('whitePlayer');
+
+        // 初始化棋盘
+        function initBoard() {
+            boardEl.innerHTML = '';
+            
+            // 创建格子
+            for (let row = 0; row < 15; row++) {
+                for (let col = 0; col < 15; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.addEventListener('click', () => handleCellClick(row, col));
+                    boardEl.appendChild(cell);
+                }
+            }
+
+            // 添加星位点
+            const starPoints = [
+                [3, 3], [3, 7], [3, 11],
+                [7, 3], [7, 7], [7, 11],
+                [11, 3], [11, 7], [11, 11]
+            ];
+            
+            starPoints.forEach(([row, col]) => {
+                const star = document.createElement('div');
+                star.className = 'star-point';
+                star.style.left = `${col * 36 + 18}px`;
+                star.style.top = `${row * 36 + 18}px`;
+                boardEl.appendChild(star);
+            });
+        }
+
+        // 连接 WebSocket
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/gomoku`;
+            
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('WebSocket 连接成功');
+                statusDot.classList.add('connected');
+                connectionText.textContent = '已连接';
+            };
+
+            ws.onmessage = (event) => {
+                const message = JSON.parse(event.data);
+                handleMessage(message);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket 连接关闭');
+                statusDot.classList.remove('connected');
+                connectionText.textContent = '已断开';
+                statusText.textContent = '连接已断开';
+                gameStarted = false;
+                resetBtn.disabled = true;
+                
+                // 尝试重连
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket 错误:', error);
+            };
+        }
+
+        // 处理服务器消息
+        function handleMessage(message) {
+            console.log('收到消息:', message);
+
+            switch (message.type) {
+                case 'WAITING':
+                    statusText.textContent = message.message;
+                    break;
+
+                case 'GAME_START':
+                    myColor = message.player;
+                    currentPlayer = message.currentPlayer;
+                    gameStarted = true;
+                    gameOver = false;
+                    board = Array(15).fill(null).map(() => Array(15).fill(0));
+                    lastMove = null;
+                    resetBtn.disabled = false;
+                    updateStatus();
+                    renderBoard();
+                    
+                    // 高亮自己的颜色
+                    if (myColor === 1) {
+                        blackPlayerEl.style.border = '2px solid var(--accent-gold)';
+                        whitePlayerEl.style.border = 'none';
+                    } else {
+                        whitePlayerEl.style.border = '2px solid var(--accent-gold)';
+                        blackPlayerEl.style.border = 'none';
+                    }
+                    break;
+
+                case 'MOVE':
+                    board[message.row][message.col] = message.player;
+                    currentPlayer = message.currentPlayer;
+                    lastMove = { row: message.row, col: message.col };
+                    renderBoard();
+                    updateStatus();
+                    break;
+
+                case 'GAME_OVER':
+                    gameOver = true;
+                    showMessage(
+                        message.winner === myColor ? '🎉 恭喜获胜！' : '😢 游戏结束',
+                        message.message
+                    );
+                    break;
+
+                case 'OPPONENT_LEFT':
+                    statusText.textContent = message.message;
+                    gameStarted = false;
+                    resetBtn.disabled = true;
+                    break;
+
+                case 'RESET':
+                    board = Array(15).fill(null).map(() => Array(15).fill(0));
+                    currentPlayer = 1;
+                    gameOver = false;
+                    lastMove = null;
+                    hideMessage();
+                    renderBoard();
+                    updateStatus();
+                    break;
+
+                case 'ERROR':
+                    console.error('服务器错误:', message.message);
+                    break;
+            }
+        }
+
+        // 更新状态文本
+        function updateStatus() {
+            updatePlayerHighlight();
+            
+            if (!gameStarted) {
+                statusText.textContent = '等待对手加入...';
+                return;
+            }
+
+            if (gameOver) {
+                return;
+            }
+
+            if (currentPlayer === myColor) {
+                statusText.textContent = '轮到你下棋';
+            } else {
+                statusText.textContent = '等待对手...';
+            }
+        }
+
+        // 更新玩家高亮
+        function updatePlayerHighlight() {
+            blackPlayerEl.classList.toggle('active', currentPlayer === 1);
+            whitePlayerEl.classList.toggle('active', currentPlayer === 2);
+        }
+
+        // 渲染棋盘
+        function renderBoard() {
+            const cells = document.querySelectorAll('.cell');
+            
+            cells.forEach(cell => {
+                const row = parseInt(cell.dataset.row);
+                const col = parseInt(cell.dataset.col);
+                
+                // 移除旧棋子
+                const oldStone = cell.querySelector('.stone');
+                if (oldStone) oldStone.remove();
+                
+                // 添加新棋子
+                if (board[row][col] !== 0) {
+                    const stone = document.createElement('div');
+                    stone.className = `stone ${board[row][col] === 1 ? 'black' : 'white'}`;
+                    
+                    // 标记最后一步
+                    if (lastMove && lastMove.row === row && lastMove.col === col) {
+                        stone.classList.add('last-move');
+                    }
+                    
+                    cell.appendChild(stone);
+                    cell.classList.add('disabled');
+                } else {
+                    cell.classList.remove('disabled');
+                }
+            });
+        }
+
+        // 处理点击事件
+        function handleCellClick(row, col) {
+            if (!gameStarted || gameOver) return;
+            if (currentPlayer !== myColor) return;
+            if (board[row][col] !== 0) return;
+
+            // 发送落子消息
+            ws.send(JSON.stringify({
+                type: 'MOVE',
+                row: row,
+                col: col
+            }));
+        }
+
+        // 显示消息
+        function showMessage(title, text) {
+            messageTitle.textContent = title;
+            messageText.textContent = text;
+            messageOverlay.classList.add('show');
+        }
+
+        // 隐藏消息
+        function hideMessage() {
+            messageOverlay.classList.remove('show');
+        }
+
+        // 重置游戏
+        function resetGame() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ type: 'RESET' }));
+            }
+        }
+
+        // 事件监听
+        resetBtn.addEventListener('click', resetGame);
+        playAgainBtn.addEventListener('click', () => {
+            hideMessage();
+            resetGame();
+        });
+
+        // 初始化
+        initBoard();
+        connectWebSocket();
+    </script>
+</body>
+</html>
+
