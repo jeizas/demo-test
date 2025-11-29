@@ -11,7 +11,10 @@ import org.springframework.web.socket.WebSocketSession;
  */
 @Data
 public class GameRoom {
-    
+
+    /** 同步锁对象 */
+    private final Object lock = new Object();
+
     /** 房间ID */
     private String roomId;
 
@@ -112,26 +115,26 @@ public class GameRoom {
     /**
      * 检查指定位置落子后是否有玩家获胜
      *
-     * @param row 落子行坐标
-     * @param col 落子列坐标
+     * @param row    落子行坐标
+     * @param col    落子列坐标
      * @param player 玩家颜色
      * @return 如果形成五子连珠则返回true，否则返回false
      */
     public boolean checkWin(int row, int col, int player) {
         return checkDirection(row, col, player, 1, 0) ||
-               checkDirection(row, col, player, 0, 1) ||
-               checkDirection(row, col, player, 1, 1) ||
-               checkDirection(row, col, player, 1, -1);
+                checkDirection(row, col, player, 0, 1) ||
+                checkDirection(row, col, player, 1, 1) ||
+                checkDirection(row, col, player, 1, -1);
     }
 
     /**
      * 检查指定方向上是否形成五子连珠
      *
-     * @param row 落子行坐标
-     * @param col 落子列坐标
+     * @param row    落子行坐标
+     * @param col    落子列坐标
      * @param player 玩家颜色
-     * @param dRow 行方向增量
-     * @param dCol 列方向增量
+     * @param dRow   行方向增量
+     * @param dCol   列方向增量
      * @return 如果该方向上连续棋子数大于等于5则返回true，否则返回false
      */
     private boolean checkDirection(int row, int col, int player, int dRow, int dCol) {
@@ -159,4 +162,3 @@ public class GameRoom {
         return count >= 5;
     }
 }
-

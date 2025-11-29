@@ -88,7 +88,7 @@ public class GomokuWebSocketHandler extends TextWebSocketHandler {
      * WebSocket连接关闭后的处理
      *
      * @param session WebSocket会话
-     * @param status 关闭状态
+     * @param status  关闭状态
      * @throws Exception 处理异常
      */
     @Override
@@ -101,14 +101,14 @@ public class GomokuWebSocketHandler extends TextWebSocketHandler {
      * 玩家加入房间
      *
      * @param session WebSocket会话
-     * @param roomId 房间ID
+     * @param roomId  房间ID
      * @throws IOException IO异常
      */
     private void joinRoom(WebSocketSession session,
-                String roomId) throws IOException {
+            String roomId) throws IOException {
         GameRoom room = rooms.computeIfAbsent(roomId, GameRoom::new);
 
-        synchronized (room) {
+        synchronized (room.getLock()) {
             if (room.getBlackPlayer() == null) {
                 room.setBlackPlayer(session);
                 sessionToRoom.put(session.getId(), roomId);
@@ -138,12 +138,14 @@ public class GomokuWebSocketHandler extends TextWebSocketHandler {
      */
     private void leaveRoom(WebSocketSession session) throws IOException {
         String roomId = sessionToRoom.remove(session.getId());
-        if (roomId == null) return;
+        if (roomId == null)
+            return;
 
         GameRoom room = rooms.get(roomId);
-        if (room == null) return;
+        if (room == null)
+            return;
 
-        synchronized (room) {
+        synchronized (room.getLock()) {
             WebSocketSession opponent = room.getOpponent(session);
 
             if (session.equals(room.getBlackPlayer())) {
@@ -168,12 +170,12 @@ public class GomokuWebSocketHandler extends TextWebSocketHandler {
      * 处理玩家落子
      *
      * @param session WebSocket会话
-     * @param room 游戏房间
+     * @param room    游戏房间
      * @param message 游戏消息
      * @throws IOException IO异常
      */
     private void handleMove(WebSocketSession session, GameRoom room, GameMessage message) throws IOException {
-        synchronized (room) {
+        synchronized (room.getLock()) {
             if (!room.isGameStarted()) {
                 sendMessage(session, GameMessage.error("游戏尚未开始"));
                 return;
@@ -235,7 +237,7 @@ public class GomokuWebSocketHandler extends TextWebSocketHandler {
      * @throws IOException IO异常
      */
     private void handleReset(GameRoom room) throws IOException {
-        synchronized (room) {
+        synchronized (room.getLock()) {
             room.reset();
             room.setGameStarted(true);
 
@@ -265,4 +267,3 @@ public class GomokuWebSocketHandler extends TextWebSocketHandler {
         }
     }
 }
-
