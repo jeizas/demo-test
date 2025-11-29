@@ -9,6 +9,7 @@ public class HelloController {
 
     @GetMapping("/")
     public String index() {
+        String x = String.format("Hello, %s!", "World");
         return "Welcome to Spring Boot Application!";
     }
 

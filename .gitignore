@@ -30,7 +30,6 @@ buildNumber.properties
 *.iml
 *.iws
 *.ipr
-.vscode/
 .settings/
 .classpath
 .project
