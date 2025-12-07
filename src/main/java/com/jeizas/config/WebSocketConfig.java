@@ -1,6 +1,7 @@
 package com.jeizas.config;
 
 import com.jeizas.websocket.GomokuWebSocketHandler;
+import com.jeizas.websocket.MahjongWebSocketHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -28,6 +29,16 @@ public class WebSocketConfig implements WebSocketConfigurer {
     }
 
     /**
+     * 创建麻将WebSocket处理器Bean
+     *
+     * @return 麻将WebSocket处理器实例
+     */
+    @Bean
+    public MahjongWebSocketHandler mahjongWebSocketHandler() {
+        return new MahjongWebSocketHandler();
+    }
+
+    /**
      * 注册WebSocket处理器
      *
      * @param registry WebSocket处理器注册表
@@ -35,6 +46,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(gomokuWebSocketHandler(), "/gomoku")
+                .setAllowedOrigins("*");
+        registry.addHandler(mahjongWebSocketHandler(), "/mahjong")
                 .setAllowedOrigins("*");
     }
 }
